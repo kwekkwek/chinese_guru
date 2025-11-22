@@ -1,0 +1,45 @@
+.card {
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.character {
+    font-size: 6rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.details {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.pinyin {
+    font-size: 1.5rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.meaning {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+}

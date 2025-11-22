@@ -1,0 +1,76 @@
+.main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+.header {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.backLink {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.backLink:hover {
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.progress {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.5);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 3rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.revealBtn {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--foreground);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.revealBtn:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.nextBtn {
+    background: var(--primary);
+    color: white;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}

@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mandarin Pronunciation App
 
-## Getting Started
+## Overview
+This is a Next.js application designed to help users learn Mandarin pronunciation using HSK 1-6 word lists. It features a glassmorphism UI and uses the Web Speech API for real-time pronunciation feedback.
 
-First, run the development server:
+## Features
+- **HSK 1-6 Support**: Curated word lists for all 6 levels.
+- **Real-time Analysis**: Uses the browser's Speech Recognition to verify pronunciation.
+- **Interactive UI**: Beautiful glassmorphism design with animations.
+- **Progress Tracking**: Tracks your progress through the word list.
 
+## How to Run
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Start Development Server**:
+   ```bash
+   npm run dev
+   ```
+3. **Open Browser**:
+   Navigate to `http://localhost:3000`.
+
+## Usage Guide
+1. **Select Level**: Choose your HSK level from the landing page.
+2. **Allow Microphone**: When prompted, allow microphone access.
+3. **Practice**:
+   - Read the character.
+   - Tap "Tap to Speak".
+   - Say the word clearly in Mandarin.
+   - Receive immediate feedback (Correct/Incorrect).
+4. **Review**: Click "Show Details" to see Pinyin and Meaning.
+
+## Deployment
+This app is ready for deployment on Vercel.
+1. Push to GitHub.
+2. Import into Vercel.
+3. Deploy.
+
+> [!NOTE]
+> Speech Recognition requires a supported browser (Chrome, Edge, Safari) and may require HTTPS in production.
+
+## Testing Guide
+
+### Manual Testing
+1. **Happy Path**:
+   - Select Level 1.
+   - Click "Tap to Speak".
+   - Say the displayed word clearly.
+   - **Expected**: Green "Correct!" message.
+
+2. **Error Path**:
+   - Click "Tap to Speak".
+   - Say a completely different word (e.g., "Apple" instead of "Ni Hao").
+   - **Expected**: Red "Try again" message and transcript showing what you said.
+
+3. **UI Testing**:
+   - Resize your browser window to mobile size.
+   - Verify the grid layout changes from 3 columns to 2 or 1.
+
+### Automated Checks
+Run the linter to check for code quality issues:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Troubleshooting
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Microphone "not-allowed" Error
+If you see a "Microphone access denied" message:
+1.  **Check Browser Permissions**: Click the lock icon or settings icon in your address bar and ensure "Microphone" is set to "Allow".
+2.  **MacOS Permissions**: Go to System Settings > Privacy & Security > Microphone and ensure your browser (Chrome/Safari) is checked.
+3.  **Refresh**: After changing settings, refresh the page.
