@@ -15,80 +15,109 @@ export default function AudioController({ targetText, onResult }: AudioControlle
     const [isSupported, setIsSupported] = useState(true);
     const [isSecure, setIsSecure] = useState(true);
     const recognitionRef = useRef<any>(null);
-
     const silenceTimer = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setIsSecure(window.isSecureContext);
-
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'zh-CN';
-                recognition.continuous = false;
-                recognition.interimResults = false;
+            if (!SpeechRecognition) {
+                setIsSupported(false);
+            }
+        }
+    }, []);
 
-                recognition.onstart = () => {
-                    setIsListening(true);
-                    setFeedback('listening');
-                    setTranscript('');
+    // Reset feedback when target changes
+    useEffect(() => {
+        setFeedback('idle');
+        setTranscript('');
+        stopListening();
+    }, [targetText]);
 
-                    // Set a timeout to stop recording if no speech is detected within 5 seconds
-                    if (silenceTimer.current) clearTimeout(silenceTimer.current);
-                    silenceTimer.current = setTimeout(() => {
-                        console.log("No speech detected, stopping recording...");
-                        recognition.stop();
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            stopListening();
+        };
+    }, []);
+
+    const startListening = () => {
+        if (typeof window === 'undefined') return;
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        try {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = true; // Enable interim results for better feedback
+
+            recognition.onstart = () => {
+                setIsListening(true);
+                setFeedback('listening');
+                setTranscript('');
+
+                // Set a timeout to stop recording if no speech is detected within 5 seconds
+                if (silenceTimer.current) clearTimeout(silenceTimer.current);
+                silenceTimer.current = setTimeout(() => {
+                    console.log("No speech detected, stopping recording...");
+                    stopListening();
+                    setFeedback('idle');
+                }, 5000);
+            };
+
+            recognition.onspeechstart = () => {
+                if (silenceTimer.current) {
+                    clearTimeout(silenceTimer.current);
+                    silenceTimer.current = null;
+                }
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+                if (silenceTimer.current) {
+                    clearTimeout(silenceTimer.current);
+                    silenceTimer.current = null;
+                }
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error("Speech recognition error", event.error);
+                setIsListening(false);
+                if (silenceTimer.current) {
+                    clearTimeout(silenceTimer.current);
+                    silenceTimer.current = null;
+                }
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    setFeedback('permission-denied');
+                } else {
+                    // Don't reset to idle if it was just a no-speech error, let the user try again
+                    if (event.error !== 'no-speech') {
                         setFeedback('idle');
-                    }, 5000);
-                };
-
-                recognition.onspeechstart = () => {
-                    // Speech detected, clear the silence timer
-                    if (silenceTimer.current) {
-                        clearTimeout(silenceTimer.current);
-                        silenceTimer.current = null;
                     }
-                };
+                }
+            };
 
-                recognition.onspeechend = () => {
-                    recognition.stop();
-                };
+            recognition.onresult = (event: any) => {
+                if (silenceTimer.current) {
+                    clearTimeout(silenceTimer.current);
+                    silenceTimer.current = null;
+                }
 
-                recognition.onend = () => {
-                    setIsListening(false);
-                    if (silenceTimer.current) {
-                        clearTimeout(silenceTimer.current);
-                        silenceTimer.current = null;
-                    }
-                };
+                const last = event.results.length - 1;
+                const result = event.results[last];
+                const text = result[0].transcript;
+                const isFinal = result.isFinal;
 
-                recognition.onerror = (event: any) => {
-                    console.error("Speech recognition error", event.error);
-                    setIsListening(false);
-                    if (silenceTimer.current) {
-                        clearTimeout(silenceTimer.current);
-                        silenceTimer.current = null;
-                    }
-                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                        setFeedback('permission-denied');
-                    } else {
-                        setFeedback('idle');
-                    }
-                };
+                setTranscript(text);
 
-                recognition.onresult = (event: any) => {
-                    if (silenceTimer.current) {
-                        clearTimeout(silenceTimer.current);
-                        silenceTimer.current = null;
-                    }
-
-                    // Explicitly stop to ensure mic is released
-                    recognition.stop();
-
-                    const last = event.results.length - 1;
-                    const text = event.results[last][0].transcript;
-                    setTranscript(text);
+                if (isFinal) {
+                    recognition.stop(); // Ensure we stop
 
                     const cleanText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
                     const cleanTarget = targetText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
@@ -100,44 +129,37 @@ export default function AudioController({ targetText, onResult }: AudioControlle
                         setFeedback('incorrect');
                         onResult(false);
                     }
-                };
+                }
+            };
 
-                recognitionRef.current = recognition;
+            recognitionRef.current = recognition;
+            recognition.start();
 
-                // Handle visibility change to stop mic when app goes to background
-                const handleVisibilityChange = () => {
-                    if (document.hidden) {
-                        recognition.abort();
-                        setIsListening(false);
-                    }
-                };
-                document.addEventListener('visibilitychange', handleVisibilityChange);
-
-                return () => {
-                    recognition.abort();
-                    if (silenceTimer.current) clearTimeout(silenceTimer.current);
-                    document.removeEventListener('visibilitychange', handleVisibilityChange);
-                };
-            } else {
-                setIsSupported(false);
-            }
+        } catch (error) {
+            console.error("Failed to start recognition:", error);
+            setIsListening(false);
         }
-    }, [targetText, onResult]);
+    };
 
-    // Reset feedback when target changes
-    useEffect(() => {
-        setFeedback('idle');
-        setTranscript('');
-    }, [targetText]);
+    const stopListening = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.abort(); // abort() is often safer than stop() for immediate cleanup
+            recognitionRef.current = null;
+        }
+        if (silenceTimer.current) {
+            clearTimeout(silenceTimer.current);
+            silenceTimer.current = null;
+        }
+        setIsListening(false);
+    };
 
     const toggleListening = () => {
         if (!isSupported) return;
 
         if (isListening) {
-            recognitionRef.current?.stop();
+            stopListening();
         } else {
-            setFeedback('listening');
-            recognitionRef.current?.start();
+            startListening();
         }
     };
 
@@ -161,7 +183,6 @@ export default function AudioController({ targetText, onResult }: AudioControlle
             <button
                 className={`${styles.micButton} ${isListening ? styles.listening : ''} ${feedback === 'correct' ? styles.btnCorrect : ''} ${feedback === 'incorrect' ? styles.btnIncorrect : ''}`}
                 onClick={toggleListening}
-                disabled={isListening}
                 aria-label={isListening ? "Stop listening" : "Start listening"}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={styles.micIcon}>
@@ -171,7 +192,7 @@ export default function AudioController({ targetText, onResult }: AudioControlle
             </button>
 
             <div className={styles.transcript}>
-                {isListening ? 'Listening...' : (transcript ? <span>You said: <span className={styles.spoken}>{transcript}</span></span> : 'Tap microphone to speak')}
+                {isListening ? (transcript ? <span className={styles.spoken}>{transcript}</span> : 'Listening...') : (transcript ? <span>You said: <span className={styles.spoken}>{transcript}</span></span> : 'Tap microphone to speak')}
             </div>
 
             {feedback === 'correct' && <div className={`${styles.feedback} ${styles.correct} fade-in`}>Correct! Excellent.</div>}
