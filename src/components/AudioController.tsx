@@ -16,6 +16,8 @@ export default function AudioController({ targetText, onResult }: AudioControlle
     const [isSecure, setIsSecure] = useState(true);
     const recognitionRef = useRef<any>(null);
 
+    const silenceTimer = useRef<NodeJS.Timeout | null>(null);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setIsSecure(window.isSecureContext);
@@ -31,15 +33,39 @@ export default function AudioController({ targetText, onResult }: AudioControlle
                     setIsListening(true);
                     setFeedback('listening');
                     setTranscript('');
+
+                    // Set a timeout to stop recording if no speech is detected within 5 seconds
+                    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+                    silenceTimer.current = setTimeout(() => {
+                        console.log("No speech detected, stopping recording...");
+                        recognition.stop();
+                        setFeedback('idle');
+                    }, 5000);
+                };
+
+                recognition.onspeechstart = () => {
+                    // Speech detected, clear the silence timer
+                    if (silenceTimer.current) {
+                        clearTimeout(silenceTimer.current);
+                        silenceTimer.current = null;
+                    }
                 };
 
                 recognition.onend = () => {
                     setIsListening(false);
+                    if (silenceTimer.current) {
+                        clearTimeout(silenceTimer.current);
+                        silenceTimer.current = null;
+                    }
                 };
 
                 recognition.onerror = (event: any) => {
                     console.error("Speech recognition error", event.error);
                     setIsListening(false);
+                    if (silenceTimer.current) {
+                        clearTimeout(silenceTimer.current);
+                        silenceTimer.current = null;
+                    }
                     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
                         setFeedback('permission-denied');
                     } else {
@@ -48,6 +74,11 @@ export default function AudioController({ targetText, onResult }: AudioControlle
                 };
 
                 recognition.onresult = (event: any) => {
+                    if (silenceTimer.current) {
+                        clearTimeout(silenceTimer.current);
+                        silenceTimer.current = null;
+                    }
+
                     const last = event.results.length - 1;
                     const text = event.results[last][0].transcript;
                     setTranscript(text);
