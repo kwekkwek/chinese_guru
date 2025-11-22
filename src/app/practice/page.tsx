@@ -83,6 +83,7 @@ function PracticeContent() {
                     <button
                         className={`btn ${styles.nextBtn}`}
                         onClick={nextWord}
+                        disabled={!isCorrect}
                     >
                         Next Word →
                     </button>

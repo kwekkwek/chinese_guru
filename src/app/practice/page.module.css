@@ -74,3 +74,11 @@
     padding-left: 2rem;
     padding-right: 2rem;
 }
+
+.nextBtn:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
+}
