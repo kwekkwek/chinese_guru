@@ -51,6 +51,10 @@ export default function AudioController({ targetText, onResult }: AudioControlle
                     }
                 };
 
+                recognition.onspeechend = () => {
+                    recognition.stop();
+                };
+
                 recognition.onend = () => {
                     setIsListening(false);
                     if (silenceTimer.current) {
@@ -79,6 +83,9 @@ export default function AudioController({ targetText, onResult }: AudioControlle
                         silenceTimer.current = null;
                     }
 
+                    // Explicitly stop to ensure mic is released
+                    recognition.stop();
+
                     const last = event.results.length - 1;
                     const text = event.results[last][0].transcript;
                     setTranscript(text);
@@ -96,6 +103,21 @@ export default function AudioController({ targetText, onResult }: AudioControlle
                 };
 
                 recognitionRef.current = recognition;
+
+                // Handle visibility change to stop mic when app goes to background
+                const handleVisibilityChange = () => {
+                    if (document.hidden) {
+                        recognition.abort();
+                        setIsListening(false);
+                    }
+                };
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+
+                return () => {
+                    recognition.abort();
+                    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                };
             } else {
                 setIsSupported(false);
             }
