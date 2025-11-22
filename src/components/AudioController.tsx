@@ -106,25 +106,20 @@ export default function AudioController({ targetText, onResult }: AudioControlle
     return (
         <div className={styles.container}>
             <button
-                className={`btn ${isListening ? styles.listening : ''} ${feedback === 'correct' ? styles.btnCorrect : ''} ${feedback === 'incorrect' ? styles.btnIncorrect : ''}`}
+                className={`${styles.micButton} ${isListening ? styles.listening : ''} ${feedback === 'correct' ? styles.btnCorrect : ''} ${feedback === 'incorrect' ? styles.btnIncorrect : ''}`}
                 onClick={toggleListening}
                 disabled={isListening}
+                aria-label={isListening ? "Stop listening" : "Start listening"}
             >
-                {isListening ? (
-                    <span className={styles.waveWrapper}>
-                        Listening
-                        <span className={styles.wave}></span>
-                        <span className={styles.wave}></span>
-                        <span className={styles.wave}></span>
-                    </span>
-                ) : 'Tap to Speak'}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={styles.micIcon}>
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                </svg>
             </button>
 
-            {transcript && (
-                <div className={`${styles.transcript} fade-in`}>
-                    You said: <span className={styles.spoken}>{transcript}</span>
-                </div>
-            )}
+            <div className={styles.transcript}>
+                {isListening ? 'Listening...' : (transcript ? <span>You said: <span className={styles.spoken}>{transcript}</span></span> : 'Tap microphone to speak')}
+            </div>
 
             {feedback === 'correct' && <div className={`${styles.feedback} ${styles.correct} fade-in`}>Correct! Excellent.</div>}
             {feedback === 'incorrect' && <div className={`${styles.feedback} ${styles.incorrect} fade-in`}>Try again.</div>}
